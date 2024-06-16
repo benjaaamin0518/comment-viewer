@@ -70,16 +70,16 @@ const CommentContextProvider = ({ children }: Props) => {
       .doc("test")
       .collection("comments")
       .orderBy("timestamp", "desc")
-      .limit(1)
+      .limit(2)
       .get()
       .then(({ docs }) => {
-        let data: number = 0;
         let commentDataIndex = 0;
+        let indexes = [];
         if (docs != null && docs.length > 0) {
-          data = docs[0].data().comment_index;
-          commentDataIndex = data;
+          indexes = docs.map((doc)=>doc.data().comment_index);
         }
-        commentDataIndex++;
+        commentDataIndex = getNextCommentIndex(indexes);
+        console.log(commentDataIndex);
         const index = commentMaxRow < commentDataIndex ? 1 : commentDataIndex;
         const comment: Comment = {
           client_id: client_id,
@@ -93,6 +93,16 @@ const CommentContextProvider = ({ children }: Props) => {
         });
       });
   };
+  const getNextCommentIndex = (commentIndexes : number[]) => {
+    const getIndexes = () => {let indexes=[];for(let i=1;i<commentMaxRow;i++){indexes.push(i);}return indexes;};
+    let indexes = getIndexes();
+    indexes = indexes.filter((index)=> !commentIndexes.includes(index));
+    const max = indexes.length-1;
+    const min = 0;
+    const index = Math.floor(Math.random() * (max - min + 1) + min);
+    console.log(indexes);
+    return indexes[index];
+  }
   /**
    * componentDidMount
    */
