@@ -41,7 +41,7 @@ type CommentExt = {
 const CommentContextProvider = ({ children }: Props) => {
   const canvas = React.useRef<HTMLCanvasElement>(null);
   const canvasContext = React.useRef<CanvasRenderingContext2D | null>(null);
-  const commentMaxRow = 10;
+  const commentMaxRow = 15;
   const renderCanvasFrame = React.useRef<number>(0);
   const rowHeight = React.useRef<number>(0);
   const [commentsData, setCommentsData] = useState<CommentExt[]>([]);
@@ -182,7 +182,7 @@ const CommentContextProvider = ({ children }: Props) => {
     const parent = canvas.current.parentNode as HTMLElement;
     if (parent === null) return;
     canvas.current.width = parent.offsetWidth;
-    canvas.current.height = parent.offsetHeight * 0.5;
+    canvas.current.height = parent.offsetHeight * 0.4;
 
     // コメントを1行分の高さ
     rowHeight.current = canvas.current.height / commentMaxRow;

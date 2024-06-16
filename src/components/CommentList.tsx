@@ -29,13 +29,13 @@ export default function CommentList() {
     <Box
       sx={{
         width: "100%",
-        height: 400,
+        height: 335,
         maxWidth: canvas.current?.width,
         bgcolor: "background.paper",
       }}
     >
       <FixedSizeList
-        height={400}
+        height={335}
         width={canvas.current ? canvas.current.width : 0}
         itemSize={46}
         itemCount={commentsDataRef.length}
