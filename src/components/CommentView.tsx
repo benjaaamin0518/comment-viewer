@@ -1,6 +1,6 @@
 import * as React from "react";
 import { CommentContext as CC } from "../contexts/CommentContext";
-const CommentViewe: React.FC = () => {
+const CommentView: React.FC = () => {
   const { canvas } = React.useContext(CC);
   return (
     <>
@@ -12,4 +12,4 @@ const CommentViewe: React.FC = () => {
     </>
   );
 };
-export default CommentViewe;
+export default CommentView;

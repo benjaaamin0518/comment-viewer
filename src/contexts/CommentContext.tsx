@@ -10,17 +10,30 @@ import getCanvasLineHeight from "../utils/getCanvasLineHeight";
 import { TweenMax, Linear } from "gsap";
 import db from "../api/firebaseConfig";
 type onClickEvent = (value: string) => void;
+type onSurveyOptionClickEvent = (option: string) => void;
 type CommentContext = {
   canvas: React.RefObject<HTMLCanvasElement>;
   commentsData: CommentExt[];
   onClickEvent: onClickEvent;
   commentsDataRef: CommentExt[];
+  survey: SurveyExt;
+  onSurveyOptionClick: onSurveyOptionClickEvent;
+  surveyAnswers: surveyAnswer;
 };
 const CommentContextValue = {
   canvas: { current: null },
   commentsData: [],
   onClickEvent: (value: string) => {},
   commentsDataRef: [],
+  survey: {
+    id: "",
+    surveyOption: [],
+    isAnswered: false,
+    title: "",
+    isVisible: false,
+  },
+  onSurveyOptionClick: (option: string) => {},
+  surveyAnswers: {},
 };
 export const CommentContext = createContext<CommentContext>(
   CommentContextValue
@@ -35,6 +48,26 @@ type Comment = {
   comment_index: number;
   delete_flg: number;
 };
+type Survey = {
+  id: string;
+  title: string;
+  surveyOption: string;
+  isAnswered: boolean;
+  isVisible: boolean;
+  timestamp: number;
+};
+type SurveyExt = Pick<Survey, "id" | "isAnswered" | "title" | "isVisible"> & {
+  surveyOption: string[];
+};
+type surveyAnswer = {
+  [key: string]: {
+    percentage: number;
+  };
+};
+type surveyAnswers = {
+  id: string;
+  option: string;
+};
 type CommentExt = {
   id: string;
 } & Comment;
@@ -47,6 +80,10 @@ const CommentContextProvider = ({ children }: Props) => {
   const [commentsData, setCommentsData] = useState<CommentExt[]>([]);
   const client_id = useMemo(() => uuidv4(), []);
   const commentsDataRef = useRef<CommentExt[]>([]);
+  const [surveyAnswers, setSurveyAnswers] = useState<surveyAnswer>(
+    CommentContextValue.surveyAnswers
+  );
+  const [survey, setSurvey] = useState<SurveyExt>(CommentContextValue.survey);
   const CommentsRef = useMemo(
     () =>
       db
@@ -55,7 +92,22 @@ const CommentContextProvider = ({ children }: Props) => {
         .collection("comments"),
     []
   );
-  const indexData = useRef<{ index: number; id: string }>({ index: 1, id: "" });
+  const SurveyRef = useMemo(
+    () =>
+      db
+        .collection("comment")
+        .doc("test")
+        .collection("survey"),
+    []
+  );
+  const SurveyAnswerRef = useMemo(
+    () =>
+      db
+        .collection("comment")
+        .doc("test")
+        .collection("surveyAnswer"),
+    []
+  );
   const onClickEvent: onClickEvent = (value) => {
     sendComment(value);
   };
@@ -66,17 +118,14 @@ const CommentContextProvider = ({ children }: Props) => {
     if (value.length === 0) {
       return;
     }
-    db.collection("comment")
-      .doc("test")
-      .collection("comments")
-      .orderBy("timestamp", "desc")
+    CommentsRef.orderBy("timestamp", "desc")
       .limit(2)
       .get()
       .then(({ docs }) => {
         let commentDataIndex = 0;
         let indexes = [];
         if (docs != null && docs.length > 0) {
-          indexes = docs.map((doc)=>doc.data().comment_index);
+          indexes = docs.map((doc) => doc.data().comment_index);
         }
         commentDataIndex = getNextCommentIndex(indexes);
         console.log(commentDataIndex);
@@ -93,16 +142,22 @@ const CommentContextProvider = ({ children }: Props) => {
         });
       });
   };
-  const getNextCommentIndex = (commentIndexes : number[]) => {
-    const getIndexes = () => {let indexes=[];for(let i=1;i<commentMaxRow;i++){indexes.push(i);}return indexes;};
+  const getNextCommentIndex = (commentIndexes: number[]) => {
+    const getIndexes = () => {
+      let indexes = [];
+      for (let i = 1; i < commentMaxRow; i++) {
+        indexes.push(i);
+      }
+      return indexes;
+    };
     let indexes = getIndexes();
-    indexes = indexes.filter((index)=> !commentIndexes.includes(index));
-    const max = indexes.length-1;
+    indexes = indexes.filter((index) => !commentIndexes.includes(index));
+    const max = indexes.length - 1;
     const min = 0;
     const index = Math.floor(Math.random() * (max - min + 1) + min);
     console.log(indexes);
     return indexes[index];
-  }
+  };
   /**
    * componentDidMount
    */
@@ -138,8 +193,69 @@ const CommentContextProvider = ({ children }: Props) => {
           }
         }
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    SurveyRef.orderBy("timestamp", "desc")
+      .limit(1)
+      .onSnapshot((snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          const data = change.doc.data() as Survey;
+          if (change.type === "added") {
+            const survey: SurveyExt = {
+              id: change.doc.id,
+              title: data.title,
+              surveyOption: JSON.parse(data.surveyOption),
+              isAnswered: data.isAnswered,
+              isVisible: data.isVisible,
+            };
+            setSurvey((prev) => {
+              if (data.isAnswered && data.isVisible)
+                resultSurveyAnswer(survey.id, survey.surveyOption);
+              return {
+                ...survey,
+              };
+            });
+          } else if (change.type === "modified") {
+            const data = change.doc.data() as Survey;
+            alert(data.isVisible);
+            const survey: SurveyExt = {
+              id: change.doc.id,
+              title: data.title,
+              surveyOption: JSON.parse(data.surveyOption),
+              isAnswered: data.isAnswered,
+              isVisible: data.isVisible,
+            };
+            setSurvey((prev) => {
+              if (data.isAnswered && data.isVisible)
+                resultSurveyAnswer(survey.id, survey.surveyOption);
+              return {
+                ...survey,
+                isAnswered: data.isAnswered,
+                isVisible: data.isVisible,
+              };
+            });
+          }
+        }
+      });
   }, []);
+  const resultSurveyAnswer = (id: string, surveyOption: string[]) => {
+    let sum = 0;
+    let answers = {};
+    SurveyAnswerRef.where("id", "==", id)
+      .get()
+      .then(({ docs }) => {
+        sum = docs.length;
+        for (const answerOption of surveyOption) {
+          const count: number = docs
+            .map((doc) => (doc.data() as surveyAnswers).option)
+            .filter((option) => option == answerOption).length;
+          console.log(count, sum);
+          const data = { percentage: Math.floor((count / sum) * 100) };
+          answers = { ...answers, [answerOption]: { ...data } };
+        }
+        setSurveyAnswers({
+          ...answers,
+        });
+      });
+  };
   const setComments = (data: CommentExt) => {
     setCommentsData((prev) => {
       const datas: CommentExt[] = [];
@@ -153,13 +269,16 @@ const CommentContextProvider = ({ children }: Props) => {
         ...data,
       });
       setTimeout(() => {}, 500);
-      db.collection("comment")
-        .doc("test")
-        .collection("comments")
-        .doc(data.id)
-        .update({ delete_flg: 1 });
+      CommentsRef.doc(data.id).update({ delete_flg: 1 });
     }
   }, [commentsData]);
+  const onSurveyOptionClick: onSurveyOptionClickEvent = (option) => {
+    const data: surveyAnswers = {
+      id: survey.id,
+      option,
+    };
+    SurveyAnswerRef.add({ ...data });
+  };
   /**
    * イベント登録
    */
@@ -232,7 +351,6 @@ const CommentContextProvider = ({ children }: Props) => {
     const canvasContextCurrent = canvasContext.current;
     const comment = data.comment_value;
     const commentWidth = canvasContextCurrent.measureText(comment).width;
-    let { index, id } = indexData.current;
     // 同じ時間に投稿されたコメントがcommentMaxRowを超えた場合はランダムな位置
     const y = getRandomCommentPosition(data.comment_index);
     // TweenMaxで動かす用の疑似テキストオブジェクト
@@ -264,6 +382,9 @@ const CommentContextProvider = ({ children }: Props) => {
         commentsData,
         onClickEvent,
         commentsDataRef: commentsDataRef.current,
+        survey,
+        onSurveyOptionClick,
+        surveyAnswers: surveyAnswers,
       }}
     >
       {children}
