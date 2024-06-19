@@ -11,6 +11,7 @@ import { TweenMax, Linear } from "gsap";
 import db from "../api/firebaseConfig";
 type onClickEvent = (value: string) => void;
 type onSurveyOptionClickEvent = (option: string) => void;
+type onClickSurveyVisibleEvent = (isDoneSend: boolean) => boolean;
 type CommentContext = {
   canvas: React.RefObject<HTMLCanvasElement>;
   commentsData: CommentExt[];
@@ -19,11 +20,14 @@ type CommentContext = {
   survey: SurveyExt;
   onSurveyOptionClick: onSurveyOptionClickEvent;
   surveyAnswers: surveyAnswer;
+  onClickSurveyVisible: onClickSurveyVisibleEvent;
+  isAnswered:boolean
+  setIsAnswered:React.Dispatch<boolean>
 };
 const CommentContextValue = {
   canvas: { current: null },
   commentsData: [],
-  onClickEvent: (value: string) => {},
+  onClickEvent: (value: string) => { },
   commentsDataRef: [],
   survey: {
     id: "",
@@ -32,8 +36,11 @@ const CommentContextValue = {
     title: "",
     isVisible: false,
   },
-  onSurveyOptionClick: (option: string) => {},
+  onSurveyOptionClick: (option: string) => { },
   surveyAnswers: {},
+  onClickSurveyVisible: () => {return false;},
+  isAnswered:false,
+  setIsAnswered:()=>{}
 };
 export const CommentContext = createContext<CommentContext>(
   CommentContextValue
@@ -56,6 +63,7 @@ type Survey = {
   isVisible: boolean;
   timestamp: number;
 };
+type SurveyField = Omit<Survey, "id">;
 type SurveyExt = Pick<Survey, "id" | "isAnswered" | "title" | "isVisible"> & {
   surveyOption: string[];
 };
@@ -80,6 +88,7 @@ const CommentContextProvider = ({ children }: Props) => {
   const [commentsData, setCommentsData] = useState<CommentExt[]>([]);
   const client_id = useMemo(() => uuidv4(), []);
   const commentsDataRef = useRef<CommentExt[]>([]);
+  const [isAnswered, setIsAnswered] = React.useState(CommentContextValue.isAnswered);
   const [surveyAnswers, setSurveyAnswers] = useState<surveyAnswer>(
     CommentContextValue.surveyAnswers
   );
@@ -111,6 +120,27 @@ const CommentContextProvider = ({ children }: Props) => {
   const onClickEvent: onClickEvent = (value) => {
     sendComment(value);
   };
+  const onClickSurveyVisible: onClickSurveyVisibleEvent = (isDoneSend) => {
+    if (isAnswered && !isDoneSend) {
+      SurveyRef.doc(survey.id).update({ isVisible: false });
+      setIsAnswered(false);
+      return isDoneSend;
+    }
+    if (isDoneSend) {
+      SurveyRef.doc(survey.id).update({ isAnswered: true });
+      return false;
+    }
+    const data = ["test1", "test2", "test3", "test4", "test5"];
+    const surveyData: SurveyField = {
+      title: "test",
+      surveyOption: JSON.stringify(data),
+      timestamp: new Date().getTime(),
+      isAnswered: false,
+      isVisible: true
+    }
+    SurveyRef.add({ ...surveyData });
+    return true;
+  }
   /**
    * コメント送信
    */
@@ -267,7 +297,7 @@ const CommentContextProvider = ({ children }: Props) => {
       createCommentCanvasView({
         ...data,
       });
-      setTimeout(() => {}, 500);
+      setTimeout(() => { }, 500);
       CommentsRef.doc(data.id).update({ delete_flg: 1 });
     }
   }, [commentsData]);
@@ -384,6 +414,9 @@ const CommentContextProvider = ({ children }: Props) => {
         survey,
         onSurveyOptionClick,
         surveyAnswers: surveyAnswers,
+        onClickSurveyVisible,
+        isAnswered,
+        setIsAnswered
       }}
     >
       {children}

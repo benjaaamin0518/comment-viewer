@@ -4,13 +4,15 @@ import InputBase from "@mui/material/InputBase";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from "@mui/icons-material/Send";
+import PollIcon from '@mui/icons-material/Poll';
 import { CommentContext } from "../contexts/CommentContext";
 
 export default function CommentForm() {
-  const { commentsData, onClickEvent, canvas } = React.useContext(
+  const { commentsData, survey, onClickEvent, canvas,isAnswered, onClickSurveyVisible } = React.useContext(
     CommentContext
   );
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const isDoneSend = React.useRef<boolean>(false);
   return (
     <Paper
       component="form"
@@ -27,6 +29,17 @@ export default function CommentForm() {
         inputProps={{ "aria-label": "コメントを入力してください。" }}
         inputRef={inputRef}
       />
+      <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+      <IconButton
+        color={isDoneSend.current?"warning":isAnswered?"inherit":"primary"}
+        sx={{ p: "10px" }}
+        aria-label="send"
+        onClick={() => {
+          isDoneSend.current=onClickSurveyVisible(isDoneSend.current);
+        }}
+      >
+        <PollIcon />
+      </IconButton>
       <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
       <IconButton
         color="primary"

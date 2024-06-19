@@ -15,8 +15,9 @@ const SurveyForm: React.FC = () => {
     survey,
     surveyAnswers,
     onSurveyOptionClick,
+    isAnswered,
+    setIsAnswered
   } = React.useContext(CC);
-  const [isAnswered, setIsAnswered] = React.useState(false);
   console.log(surveyAnswers);
   return (
     <>
