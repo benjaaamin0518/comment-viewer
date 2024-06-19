@@ -215,7 +215,6 @@ const CommentContextProvider = ({ children }: Props) => {
             });
           } else if (change.type === "modified") {
             const data = change.doc.data() as Survey;
-            alert(data.isVisible);
             const survey: SurveyExt = {
               id: change.doc.id,
               title: data.title,
