@@ -21,8 +21,8 @@ type CommentContext = {
   onSurveyOptionClick: onSurveyOptionClickEvent;
   surveyAnswers: surveyAnswer;
   onClickSurveyVisible: onClickSurveyVisibleEvent;
-  isAnswered:boolean
-  setIsAnswered:React.Dispatch<boolean>
+  isAnswered: boolean
+  setIsAnswered: React.Dispatch<boolean>
 };
 const CommentContextValue = {
   canvas: { current: null },
@@ -38,9 +38,9 @@ const CommentContextValue = {
   },
   onSurveyOptionClick: (option: string) => { },
   surveyAnswers: {},
-  onClickSurveyVisible: () => {return false;},
-  isAnswered:false,
-  setIsAnswered:()=>{}
+  onClickSurveyVisible: () => { return false; },
+  isAnswered: false,
+  setIsAnswered: () => { }
 };
 export const CommentContext = createContext<CommentContext>(
   CommentContextValue
@@ -121,14 +121,13 @@ const CommentContextProvider = ({ children }: Props) => {
     sendComment(value);
   };
   const onClickSurveyVisible: onClickSurveyVisibleEvent = (isDoneSend) => {
-    if (isAnswered && !isDoneSend) {
+    if (isAnswered && isDoneSend && survey.isAnswered) {
       SurveyRef.doc(survey.id).update({ isVisible: false });
-      setIsAnswered(false);
-      return isDoneSend;
-    }
-    if (isDoneSend) {
-      SurveyRef.doc(survey.id).update({ isAnswered: true });
       return false;
+    }
+    if (isDoneSend || !survey.isAnswered) {
+      SurveyRef.doc(survey.id).update({ isAnswered: true });
+      return true;
     }
     const data = ["test1", "test2", "test3", "test4", "test5"];
     const surveyData: SurveyField = {
@@ -252,6 +251,8 @@ const CommentContextProvider = ({ children }: Props) => {
               isAnswered: data.isAnswered,
               isVisible: data.isVisible,
             };
+            if (!data.isVisible)
+              setIsAnswered(false);
             setSurvey((prev) => {
               if (data.isAnswered && data.isVisible)
                 resultSurveyAnswer(survey.id, survey.surveyOption);
