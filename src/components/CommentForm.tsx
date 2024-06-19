@@ -31,7 +31,7 @@ export default function CommentForm() {
       />
       <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
       <IconButton
-        color={isDoneSend.current?"warning":isAnswered?"inherit":"primary"}
+        color={!survey.isAnswered && survey.isVisible?"warning":survey.isAnswered && survey.isVisible?"inherit":"primary"}
         sx={{ p: "10px" }}
         aria-label="send"
         onClick={() => {

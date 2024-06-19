@@ -121,11 +121,11 @@ const CommentContextProvider = ({ children }: Props) => {
     sendComment(value);
   };
   const onClickSurveyVisible: onClickSurveyVisibleEvent = (isDoneSend) => {
-    if (isAnswered && isDoneSend && survey.isAnswered) {
+    if (survey.isVisible && survey.isAnswered) {
       SurveyRef.doc(survey.id).update({ isVisible: false });
       return false;
     }
-    if (isDoneSend || !survey.isAnswered) {
+    if (!survey.isAnswered) {
       SurveyRef.doc(survey.id).update({ isAnswered: true });
       return true;
     }
