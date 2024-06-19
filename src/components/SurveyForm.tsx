@@ -16,6 +16,7 @@ const SurveyForm: React.FC = () => {
     surveyAnswers,
     onSurveyOptionClick,
   } = React.useContext(CC);
+  const [isAnswered, setIsAnswered] = React.useState(false);
   console.log(surveyAnswers);
   return (
     <>
@@ -30,16 +31,39 @@ const SurveyForm: React.FC = () => {
           flexGrow: 1,
         }}
       >
-        <Grid container spacing={2} alignItems={"center"} sx={{ opacity: 0.8 }}>
+        <Grid container spacing={5} alignItems={"center"} sx={{ opacity: 0.8 }}>
           <Grid item xs={12}>
-            <Item>{survey.title}</Item>
+            <Item
+              sx={{
+                background:
+                  isAnswered && !survey.isAnswered ? "#d3d3d3" : "#87cefa",
+                opacity: isAnswered && !survey.isAnswered ? 0.2 : 0.8,
+              }}
+            >
+              {survey.title}
+              {!survey.isAnswered && isAnswered && <br />}
+              {!survey.isAnswered && isAnswered && "回答済みです。"}
+            </Item>
           </Grid>
           {survey.surveyOption.map((option, index) => (
-            <Grid item xs={6} key={index}>
+            <Grid
+              item
+              xs={6}
+              key={index}
+              className={isAnswered ? "container-disabled" : "container"}
+            >
               <Item
                 key={index}
+                sx={{
+                  background:
+                    isAnswered && !survey.isAnswered ? "#d3d3d3" : "#87cefa",
+                  opacity: isAnswered && !survey.isAnswered ? 0.2 : 0.8,
+                }}
                 onClick={() => {
-                  onSurveyOptionClick(option);
+                  if (!isAnswered && !survey.isAnswered) {
+                    setIsAnswered(true);
+                    onSurveyOptionClick(option);
+                  }
                 }}
               >
                 {option}
