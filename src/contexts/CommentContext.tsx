@@ -129,7 +129,7 @@ const CommentContextProvider = ({ children }: Props) => {
       SurveyRef.doc(survey.id).update({ isAnswered: true });
       return true;
     }
-    const data = ["test1", "test2", "test3", "test4", "test5"];
+    const data = ["test1", "test2", "test3", "test4"];
     const surveyData: SurveyField = {
       title: "test",
       surveyOption: JSON.stringify(data),

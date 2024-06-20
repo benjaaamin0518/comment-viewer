@@ -23,7 +23,7 @@ const SurveyForm: React.FC = () => {
     <>
       <Box
         width={canvas.current ? canvas.current.width : 0}
-        height={canvas.current ? canvas.current.height * 1.1 : 0}
+        height={canvas.current ?"100%": 0}
         sx={{
           top: 10,
           left: 10,
