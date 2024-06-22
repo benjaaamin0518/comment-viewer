@@ -4,13 +4,16 @@ import InputBase from "@mui/material/InputBase";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from "@mui/icons-material/Send";
-import PollIcon from '@mui/icons-material/Poll';
+import PollIcon from "@mui/icons-material/Poll";
 import { CommentContext } from "../contexts/CommentContext";
 
 export default function CommentForm() {
-  const { commentsData, survey, onClickEvent, canvas,isAnswered, onClickSurveyVisible } = React.useContext(
-    CommentContext
-  );
+  const {
+    survey,
+    onClickEvent,
+    canvas,
+    onClickSurveyVisible,
+  } = React.useContext(CommentContext);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const isDoneSend = React.useRef<boolean>(false);
   return (
@@ -31,11 +34,17 @@ export default function CommentForm() {
       />
       <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
       <IconButton
-        color={!survey.isAnswered && survey.isVisible?"warning":survey.isAnswered && survey.isVisible?"inherit":"primary"}
+        color={
+          !survey.isAnswered && survey.isVisible
+            ? "warning"
+            : survey.isAnswered && survey.isVisible
+            ? "inherit"
+            : "primary"
+        }
         sx={{ p: "10px" }}
         aria-label="send"
         onClick={() => {
-          isDoneSend.current=onClickSurveyVisible(isDoneSend.current);
+          isDoneSend.current = onClickSurveyVisible(isDoneSend.current);
         }}
       >
         <PollIcon />

@@ -1,4 +1,8 @@
 node_modules
 .DS_Store
 .env
-public/assets
+public/web/assets/js/app.js
+dist
+comment-viewer-win32-arm64
+comment-viewer-darwin-arm64
+tsconfig.tsbuildinfo

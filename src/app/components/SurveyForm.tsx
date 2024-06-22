@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CommentContext as CC } from "../contexts/CommentContext";
+import { CommentContext as CC } from "../../web/contexts/CommentContext";
 import { Box, Grid, Paper, alpha, styled } from "@mui/material";
 import { amber } from "@mui/material/colors";
 const Item = styled(Paper)(({ theme }) => ({
@@ -16,14 +16,14 @@ const SurveyForm: React.FC = () => {
     surveyAnswers,
     onSurveyOptionClick,
     isAnswered,
-    setIsAnswered
+    setIsAnswered,
   } = React.useContext(CC);
   console.log(surveyAnswers);
   return (
     <>
       <Box
         width={canvas.current ? canvas.current.width : 0}
-        height={canvas.current ?"100%": 0}
+        height={canvas.current ? "100%" : 0}
         sx={{
           top: 10,
           left: 10,

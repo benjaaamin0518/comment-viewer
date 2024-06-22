@@ -3,19 +3,18 @@ const TerserPlugin = require("terser-webpack-plugin");
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
   .BundleAnalyzerPlugin;
 const Dotenv = require("dotenv-webpack");
-
 const mode =
   process.env.NODE_ENV !== "production" ? "development" : "production";
-
+const isDev = process.env.NODE_ENV === "development";
 module.exports = {
   mode: mode,
   devtool: mode === "production" ? false : "inline-source-map",
   entry: {
-    app: "./src/index.tsx",
+    app: "./src/web/index.tsx",
   },
   output: {
     filename: "[name].js",
-    path: path.join(__dirname, "./public/assets/js/"),
+    path: path.join(__dirname, "./public/web/assets/js/"),
   },
   module: {
     rules: [
@@ -34,7 +33,7 @@ module.exports = {
   },
   devServer: {
     open: false,
-    contentBase: path.resolve(__dirname, "./public"),
+    contentBase: path.resolve(__dirname, "./public/web"),
     watchContentBase: true,
     historyApiFallback: true,
     writeToDisk: true,

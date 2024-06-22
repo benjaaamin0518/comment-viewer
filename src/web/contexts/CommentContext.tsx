@@ -21,13 +21,13 @@ type CommentContext = {
   onSurveyOptionClick: onSurveyOptionClickEvent;
   surveyAnswers: surveyAnswer;
   onClickSurveyVisible: onClickSurveyVisibleEvent;
-  isAnswered: boolean
-  setIsAnswered: React.Dispatch<boolean>
+  isAnswered: boolean;
+  setIsAnswered: React.Dispatch<boolean>;
 };
 const CommentContextValue = {
   canvas: { current: null },
   commentsData: [],
-  onClickEvent: (value: string) => { },
+  onClickEvent: (value: string) => {},
   commentsDataRef: [],
   survey: {
     id: "",
@@ -36,17 +36,20 @@ const CommentContextValue = {
     title: "",
     isVisible: false,
   },
-  onSurveyOptionClick: (option: string) => { },
+  onSurveyOptionClick: (option: string) => {},
   surveyAnswers: {},
-  onClickSurveyVisible: () => { return false; },
+  onClickSurveyVisible: () => {
+    return false;
+  },
   isAnswered: false,
-  setIsAnswered: () => { }
+  setIsAnswered: () => {},
 };
 export const CommentContext = createContext<CommentContext>(
   CommentContextValue
 );
 type Props = {
   children: JSX.Element;
+  canvasheightScale: number;
 };
 type Comment = {
   comment_value: string;
@@ -79,7 +82,7 @@ type surveyAnswers = {
 type CommentExt = {
   id: string;
 } & Comment;
-const CommentContextProvider = ({ children }: Props) => {
+const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
   const canvas = React.useRef<HTMLCanvasElement>(null);
   const canvasContext = React.useRef<CanvasRenderingContext2D | null>(null);
   const commentMaxRow = 15;
@@ -88,7 +91,9 @@ const CommentContextProvider = ({ children }: Props) => {
   const [commentsData, setCommentsData] = useState<CommentExt[]>([]);
   const client_id = useMemo(() => uuidv4(), []);
   const commentsDataRef = useRef<CommentExt[]>([]);
-  const [isAnswered, setIsAnswered] = React.useState(CommentContextValue.isAnswered);
+  const [isAnswered, setIsAnswered] = React.useState(
+    CommentContextValue.isAnswered
+  );
   const [surveyAnswers, setSurveyAnswers] = useState<surveyAnswer>(
     CommentContextValue.surveyAnswers
   );
@@ -135,11 +140,11 @@ const CommentContextProvider = ({ children }: Props) => {
       surveyOption: JSON.stringify(data),
       timestamp: new Date().getTime(),
       isAnswered: false,
-      isVisible: true
-    }
+      isVisible: true,
+    };
     SurveyRef.add({ ...surveyData });
     return true;
-  }
+  };
   /**
    * コメント送信
    */
@@ -174,13 +179,14 @@ const CommentContextProvider = ({ children }: Props) => {
   const getNextCommentIndex = (commentIndexes: number[]) => {
     const getIndexes = () => {
       let indexes = [];
-      for (let i = 1; i < commentMaxRow; i++) {
+      for (let i = 1; i <= commentMaxRow; i++) {
         indexes.push(i);
       }
       return indexes;
     };
     let indexes = getIndexes();
     indexes = indexes.filter((index) => !commentIndexes.includes(index));
+    console.log(indexes);
     const max = indexes.length - 1;
     const min = 0;
     const index = Math.floor(Math.random() * (max - min + 1) + min);
@@ -251,8 +257,7 @@ const CommentContextProvider = ({ children }: Props) => {
               isAnswered: data.isAnswered,
               isVisible: data.isVisible,
             };
-            if (!data.isVisible)
-              setIsAnswered(false);
+            if (!data.isVisible) setIsAnswered(false);
             setSurvey((prev) => {
               if (data.isAnswered && data.isVisible)
                 resultSurveyAnswer(survey.id, survey.surveyOption);
@@ -298,7 +303,7 @@ const CommentContextProvider = ({ children }: Props) => {
       createCommentCanvasView({
         ...data,
       });
-      setTimeout(() => { }, 500);
+      setTimeout(() => {}, 500);
       CommentsRef.doc(data.id).update({ delete_flg: 1 });
     }
   }, [commentsData]);
@@ -331,8 +336,7 @@ const CommentContextProvider = ({ children }: Props) => {
     const parent = canvas.current.parentNode as HTMLElement;
     if (parent === null) return;
     canvas.current.width = parent.offsetWidth;
-    canvas.current.height = parent.offsetHeight * 0.4;
-
+    canvas.current.height = parent.offsetHeight * canvasheightScale;
     // コメントを1行分の高さ
     rowHeight.current = canvas.current.height / commentMaxRow;
     // 画面にコメントが10行収まるフォントサイズ
@@ -417,7 +421,7 @@ const CommentContextProvider = ({ children }: Props) => {
         surveyAnswers: surveyAnswers,
         onClickSurveyVisible,
         isAnswered,
-        setIsAnswered
+        setIsAnswered,
       }}
     >
       {children}

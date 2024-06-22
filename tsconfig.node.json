@@ -1,0 +1,10 @@
+{
+  "extends": ".",
+  "compilerOptions": {
+    "module": "esnext",
+    "outDir": "dist",
+    "allowUnreachableCode":true,
+    "typeRoots": ["node_modules/@types", "./src/@types"]
+  },
+  "include": ["src/**/*.tsx", "src/@types/*,src/app/*.ts"]
+}

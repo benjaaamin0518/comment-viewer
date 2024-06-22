@@ -17,11 +17,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
+    // "noEmit": true,
     "isolatedModules": true,
     "baseUrl": "./",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/web/*"]
     },
     "typeRoots": ["node_modules/@types", "./src/@types"]
   },
