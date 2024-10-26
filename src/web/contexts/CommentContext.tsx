@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import getCanvasLineHeight from "../utils/getCanvasLineHeight";
 import { TweenMax, Linear } from "gsap";
 import db from "../api/firebaseConfig";
+import { firestore } from "firebase";
 type onClickEvent = (value: string) => void;
 type onSurveyOptionClickEvent = (option: string) => void;
 type onClickSurveyVisibleEvent = (isDoneSend: boolean) => boolean;
@@ -152,29 +153,61 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
     if (value.length === 0) {
       return;
     }
-    CommentsRef.orderBy("timestamp", "desc")
-      .limit(2)
-      .get()
-      .then(({ docs }) => {
-        let commentDataIndex = 0;
-        let indexes = [];
-        if (docs != null && docs.length > 0) {
-          indexes = docs.map((doc) => doc.data().comment_index);
-        }
-        commentDataIndex = getNextCommentIndex(indexes);
-        console.log(commentDataIndex);
-        const index = commentMaxRow < commentDataIndex ? 1 : commentDataIndex;
-        const comment: Comment = {
-          client_id: client_id,
-          comment_value: value,
-          timestamp: new Date().getTime(),
-          comment_index: index,
-          delete_flg: 0,
-        };
-        CommentsRef.add({
-          ...comment,
-        });
-      });
+    const batch = db.batch();
+    await db.runTransaction(
+      async (transaction: {
+        get: (arg0: firestore.DocumentReference<firestore.DocumentData>) => any;
+        set: (
+          arg0: firestore.DocumentReference<firestore.DocumentData>,
+          arg1: {
+            comment_value: string;
+            client_id: string;
+            timestamp: number;
+            comment_index: number;
+            delete_flg: number;
+          }
+        ) => void;
+      }) => {
+        CommentsRef.orderBy("timestamp", "desc")
+          .limit(2)
+          .get()
+          .then(async ({ docs }) => {
+            let commentDataIndex = 0;
+            let indexes: number[] = [];
+            if (docs != null && docs.length > 0) {
+              for (const doc of docs) {
+                const docRef = await transaction.get(doc.ref);
+                const index = docRef.data()!.comment_index as number;
+                // const index = doc.data().comment_index as number;
+                console.log(index);
+                indexes.push(index);
+              }
+            }
+            commentDataIndex = getNextCommentIndex(indexes);
+            console.log(commentDataIndex);
+            const index =
+              commentMaxRow < commentDataIndex ? 1 : commentDataIndex;
+            const comment: Comment = {
+              client_id: client_id,
+              comment_value: value,
+              timestamp: new Date().getTime(),
+              comment_index: index,
+              delete_flg: 0,
+            };
+
+            const docRef = db
+              .collection("comment")
+              .doc("test")
+              .collection("comments")
+              .doc();
+            batch.set(docRef, {
+              ...comment,
+            });
+            // });
+            await batch.commit().then(() => {});
+          });
+      }
+    );
   };
   const getNextCommentIndex = (commentIndexes: number[]) => {
     const getIndexes = () => {
@@ -429,3 +462,6 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
   );
 };
 export default CommentContextProvider;
+function writeBatch(db: firestore.Firestore) {
+  throw new Error("Function not implemented.");
+}
