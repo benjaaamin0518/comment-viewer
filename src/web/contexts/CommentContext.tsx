@@ -153,61 +153,64 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
     if (value.length === 0) {
       return;
     }
+    const indexRef = db
+      .collection("comment")
+      .doc("test")
+      .collection("index")
+      .doc("test");
     const batch = db.batch();
-    await db.runTransaction(
-      async (transaction: {
-        get: (arg0: firestore.DocumentReference<firestore.DocumentData>) => any;
-        set: (
-          arg0: firestore.DocumentReference<firestore.DocumentData>,
-          arg1: {
-            comment_value: string;
-            client_id: string;
-            timestamp: number;
-            comment_index: number;
-            delete_flg: number;
-          }
-        ) => void;
-      }) => {
-        CommentsRef.orderBy("timestamp", "desc")
-          .limit(2)
-          .get()
-          .then(async ({ docs }) => {
-            let commentDataIndex = 0;
-            let indexes: number[] = [];
-            if (docs != null && docs.length > 0) {
-              for (const doc of docs) {
-                const docRef = await transaction.get(doc.ref);
-                const index = docRef.data()!.comment_index as number;
-                // const index = doc.data().comment_index as number;
-                console.log(index);
-                indexes.push(index);
-              }
+    let newIndex = 0;
+    await db
+      .runTransaction(
+        async (transaction: {
+          update: any;
+          get: (
+            arg0: firestore.DocumentReference<firestore.DocumentData>
+          ) => any;
+          set: (
+            arg0: firestore.DocumentReference<firestore.DocumentData>,
+            arg1: {
+              comment_value: string;
+              client_id: string;
+              timestamp: number;
+              comment_index: number;
+              delete_flg: number;
             }
-            commentDataIndex = getNextCommentIndex(indexes);
-            console.log(commentDataIndex);
-            const index =
-              commentMaxRow < commentDataIndex ? 1 : commentDataIndex;
-            const comment: Comment = {
-              client_id: client_id,
-              comment_value: value,
-              timestamp: new Date().getTime(),
-              comment_index: index,
-              delete_flg: 0,
-            };
-
-            const docRef = db
-              .collection("comment")
-              .doc("test")
-              .collection("comments")
-              .doc();
-            batch.set(docRef, {
-              ...comment,
-            });
-            // });
-            await batch.commit().then(() => {});
+          ) => void;
+        }) => {
+          return transaction.get(indexRef).then(async (sfDoc: any) => {
+            if (!sfDoc.exists) {
+              throw "Document does not exist!";
+            }
+            newIndex = sfDoc.data().comment_index + 1;
+            newIndex = commentMaxRow < newIndex ? 1 : newIndex;
+            newIndex = getNextCommentIndex([newIndex]);
+            transaction.update(indexRef, { comment_index: newIndex });
           });
-      }
-    );
+        }
+      )
+      .then(async () => {
+        const comment: Comment = {
+          client_id: client_id,
+          comment_value: value,
+          timestamp: new Date().getTime(),
+          comment_index: newIndex,
+          delete_flg: 0,
+        };
+        const docRef = db
+          .collection("comment")
+          .doc("test")
+          .collection("comments")
+          .doc();
+        batch.set(docRef, {
+          ...comment,
+        });
+        await batch.commit().then(() => {});
+        console.log("Transaction successfully committed!");
+      })
+      .catch((error) => {
+        console.log("Transaction failed: ", error);
+      });
   };
   const getNextCommentIndex = (commentIndexes: number[]) => {
     const getIndexes = () => {
