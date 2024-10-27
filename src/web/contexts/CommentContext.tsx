@@ -28,7 +28,7 @@ type CommentContext = {
 const CommentContextValue = {
   canvas: { current: null },
   commentsData: [],
-  onClickEvent: (value: string) => {},
+  onClickEvent: (value: string) => { },
   commentsDataRef: [],
   survey: {
     id: "",
@@ -37,13 +37,13 @@ const CommentContextValue = {
     title: "",
     isVisible: false,
   },
-  onSurveyOptionClick: (option: string) => {},
+  onSurveyOptionClick: (option: string) => { },
   surveyAnswers: {},
   onClickSurveyVisible: () => {
     return false;
   },
   isAnswered: false,
-  setIsAnswered: () => {},
+  setIsAnswered: () => { },
 };
 export const CommentContext = createContext<CommentContext>(
   CommentContextValue
@@ -163,7 +163,12 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
     await db
       .runTransaction(
         async (transaction: {
-          update: any;
+          update: (
+            arg0: firestore.DocumentReference<firestore.DocumentData>,
+            arg1: {
+              comment_index: number;
+            }
+          ) => void;
           get: (
             arg0: firestore.DocumentReference<firestore.DocumentData>
           ) => any;
@@ -182,9 +187,9 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
             if (!sfDoc.exists) {
               throw "Document does not exist!";
             }
-            newIndex = sfDoc.data().comment_index + 1;
+            const index = sfDoc.data().comment_index;
+            newIndex = getNextCommentIndex([index]);
             newIndex = commentMaxRow < newIndex ? 1 : newIndex;
-            newIndex = getNextCommentIndex([newIndex]);
             transaction.update(indexRef, { comment_index: newIndex });
           });
         }
@@ -205,7 +210,7 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
         batch.set(docRef, {
           ...comment,
         });
-        await batch.commit().then(() => {});
+        await batch.commit().then(() => { });
         console.log("Transaction successfully committed!");
       })
       .catch((error) => {
@@ -339,7 +344,7 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
       createCommentCanvasView({
         ...data,
       });
-      setTimeout(() => {}, 500);
+      setTimeout(() => { }, 500);
       CommentsRef.doc(data.id).update({ delete_flg: 1 });
     }
   }, [commentsData]);
@@ -465,6 +470,3 @@ const CommentContextProvider = ({ children, canvasheightScale }: Props) => {
   );
 };
 export default CommentContextProvider;
-function writeBatch(db: firestore.Firestore) {
-  throw new Error("Function not implemented.");
-}
